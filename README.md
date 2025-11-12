@@ -1,4 +1,4 @@
-# SpeedSpin Verifier
+# Acebet Verifier
 
 A web application for verifying game outcomes in various casino-style games. This tool allows users to verify the fairness of game results by validating them against provided server seeds, client seeds, and nonces.
 
