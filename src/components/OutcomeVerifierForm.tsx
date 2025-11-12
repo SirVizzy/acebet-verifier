@@ -10,6 +10,7 @@ import { getHashFrom } from '@/helpers/crypto';
 import * as z from 'zod';
 import { mines } from '@/games/mines';
 import { blackjack } from '@/games/blackjack';
+import { baccarat } from '@/games/baccarat';
 import { roulette } from '@/games/roulette';
 import { dice } from '@/games/dice';
 import { plinko } from '@/games/plinko';
@@ -20,7 +21,7 @@ const base = z.object({
   clientSeed: z.string().min(1, 'Client seed is required'),
   serverSeed: z.string().min(1, 'Server seed is required'),
   serverSeedHash: z.string().min(1, 'Server seed hash is required'),
-  nonce: z.string().min(1, 'Nonce is required'),
+  nonce: z.number().min(1, 'Nonce is required'),
 });
 
 const createSchema = () => {
@@ -36,6 +37,10 @@ const createSchema = () => {
     base.extend({
       gamemode: z.literal('blackjack'),
       options: blackjack.schema,
+    }),
+    base.extend({
+      gamemode: z.literal('baccarat'),
+      options: baccarat.schema,
     }),
     base.extend({
       gamemode: z.literal('roulette'),
@@ -126,7 +131,6 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
           />
         </div>
 
-        {/* Game-specific options */}
         {selectedGame === 'mines' && (
           <div className="grid grid-cols-2 gap-4">
             <FormField
@@ -174,7 +178,7 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
           />
         )}
 
-        {selectedGame === 'blackjack' && (
+        {['blackjack', 'baccarat'].includes(selectedGame) && (
           <FormField
             control={form.control}
             name="options.cards"
@@ -226,7 +230,7 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
               <FormItem>
                 <FormLabel>Nonce</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter nonce" {...field} />
+                  <Input type="number" min="0" placeholder="Enter nonce" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
