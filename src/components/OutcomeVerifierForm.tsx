@@ -16,6 +16,7 @@ import { dice } from '@/games/dice';
 import { plinko } from '@/games/plinko';
 import { VerificationResult } from '@/types';
 import { getSearchParamFromPayload } from '@/helpers/search';
+import { useEffect } from 'react';
 
 const base = z.object({
   clientSeed: z.string().min(1, 'Client seed is required'),
@@ -101,6 +102,21 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
     synchronizeParams();
   }
 
+  useEffect(() => {
+    if (selectedGame) {
+
+      console.log({
+        ...form.getValues(),
+        options: undefined,
+      })
+
+      form.reset({
+        ...form.getValues(),
+        options: undefined,
+      });
+    }
+  }, [selectedGame, form]);
+
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-6">
@@ -170,7 +186,7 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
               <FormItem>
                 <FormLabel>Number of Rows</FormLabel>
                 <FormControl>
-                  <Input type="number" min="1" max="10" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                  <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -197,12 +213,12 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
         <div className="grid grid-cols-3 gap-2">
           <FormField
             control={form.control}
-            name="clientSeed"
+            name="serverSeed"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Client Seed</FormLabel>
+                <FormLabel>Server Seed</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter client seed" {...field} />
+                  <Input placeholder="Enter server seed" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -211,12 +227,12 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
 
           <FormField
             control={form.control}
-            name="serverSeed"
+            name="clientSeed"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Server Seed</FormLabel>
+                <FormLabel>Client Seed</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter server seed" {...field} />
+                  <Input placeholder="Enter client seed" {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

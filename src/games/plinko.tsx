@@ -9,7 +9,7 @@ export type PlinkoOptions = {
 export const plinko: Game<PlinkoOptions> = {
   id: 'plinko',
   schema: z.object({
-    rows: z.number().min(1).max(10),
+    rows: z.number().min(8).max(16),
   }),
   process: (seed, options) => {
     const steps: GameOutcomeStep[] = [];
