@@ -23,7 +23,7 @@ export type GameOutcomeStep = {
   metadata?: Record<string, string | number | boolean | null>;
 };
 
-export type GameMode = 'plinko' | 'dice' | 'blackjack' | 'baccarat' | 'roulette' | 'mines';
+export type GameMode = 'plinko' | 'dice' | 'blackjack' | 'baccarat' | 'roulette' | 'mines' | 'craps';
 
 export type Game<TOptions = undefined, TResult = string> = {
   id: GameMode;

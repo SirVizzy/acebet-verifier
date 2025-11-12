@@ -18,14 +18,14 @@ export const baccarat: Game<BaccaratOptions> = {
     const steps: GameOutcomeStep[] = [];
 
     for (let i = 0; i < options.cards; i++) {
-      const roundSeed = `${seed}:${i}`;
-      const raw = seedrandom(roundSeed)();
+      const cardSeed = `${seed}:${i}`;
+      const raw = seedrandom(cardSeed)();
       const id = Math.round(raw * 51);
       const card = [RANKS[id % RANKS.length], SUITS[Math.floor(id / RANKS.length)]];
 
       steps.push({
         title: 'Card',
-        seed: roundSeed,
+        seed: cardSeed,
         raw: raw,
         metadata: {
           card: card.join(' '),

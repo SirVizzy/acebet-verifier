@@ -1,40 +1,40 @@
-// import { Game } from '@/types';
-// import { z } from 'zod';
-// import seedrandom from 'seedrandom';
+import { Game } from '@/types';
+import { z } from 'zod';
+import seedrandom from 'seedrandom';
 
-// TODO: Add Craps.
-// export const craps: Game = {
-//   id: 'craps',
-//   schema: z.void(),
-//   process: (seed) => {
-//     const rng = seedrandom(seed);
-//     const raw1 = rng();
-//     const raw2 = rng();
-//     const die1 = Math.floor(raw1 * 6) + 1;
-//     const die2 = Math.floor(raw2 * 6) + 1;
+const DICES_COUNT = 2;
+const DICES_SIDES = 6;
 
-//     return {
-//       seed: seed,
-//       result: `[${die1}, ${die2}]`,
-//       raw: raw1,
-//       steps: [
-//         {
-//           title: 'Die',
-//           raw: raw1,
-//           metadata: {
-//             value: die1,
-//           },
-//         },
-//         {
-//           title: 'Die',
-//           raw: raw2,
-//           metadata: {
-//             value: die2,
-//           },
-//         },
-//       ],
-//     };
-//   },
-//   render: (outcome) => outcome.result,
-// };
+export const craps: Game = {
+  id: 'craps',
+  schema: z.void(),
+  process: (seed) => {
+    const results = Array.from({ length: DICES_COUNT }, (_, idx) => {
+      const dieSeed = `${seed}:${idx + 1}`;
+      const rng = seedrandom(dieSeed);
+      const raw = rng();
+      const value = Math.floor(raw * DICES_SIDES) + 1;
+      
+      return {
+        raw,
+        value,
+        seed: dieSeed,
+      };
+    });
+
+    return {
+      seed: seed,
+      result: `[${results.map((result) => result.value).join(', ')}]`,
+      steps: results.map((result) => ({
+        title: 'Die',
+        raw: result.raw,
+        seed: result.seed,
+        metadata: {
+          value: result.value,
+        },
+      })),
+    };
+  },
+  render: (outcome) => outcome.result,
+};
 

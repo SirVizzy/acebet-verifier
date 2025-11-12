@@ -14,6 +14,7 @@ import { baccarat } from '@/games/baccarat';
 import { roulette } from '@/games/roulette';
 import { dice } from '@/games/dice';
 import { plinko } from '@/games/plinko';
+import { craps } from '@/games/craps';
 import { VerificationResult } from '@/types';
 import { getSearchParamFromPayload } from '@/helpers/search';
 import { useEffect } from 'react';
@@ -50,6 +51,10 @@ const createSchema = () => {
     base.extend({
       gamemode: z.literal('dice'),
       options: dice.schema,
+    }),
+    base.extend({
+      gamemode: z.literal('craps'),
+      options: craps.schema,
     }),
   ]);
 };
