@@ -5,6 +5,7 @@ import { mines } from "./games/mines";
 import { plinko } from "./games/plinko";
 import { roulette } from "./games/roulette";
 import { craps } from "./games/craps";
+import { keno } from "./games/keno";
 
 export const games = {
   plinko,
@@ -14,4 +15,5 @@ export const games = {
   roulette,
   mines,
   craps,
+  keno,
 } as const;

@@ -15,6 +15,7 @@ import { roulette } from '@/games/roulette';
 import { dice } from '@/games/dice';
 import { plinko } from '@/games/plinko';
 import { craps } from '@/games/craps';
+import { keno } from '@/games/keno';
 import { VerificationResult } from '@/types';
 import { getSearchParamFromPayload } from '@/helpers/search';
 import { useEffect } from 'react';
@@ -55,6 +56,10 @@ const createSchema = () => {
     base.extend({
       gamemode: z.literal('craps'),
       options: craps.schema,
+    }),
+    base.extend({
+      gamemode: z.literal('keno'),
+      options: keno.schema,
     }),
   ]);
 };
@@ -192,6 +197,22 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
                 <FormLabel>Number of Rows</FormLabel>
                 <FormControl>
                   <Input type="number" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {selectedGame === 'keno' && (
+          <FormField
+            control={form.control}
+            name="options.picks"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Number of Picks</FormLabel>
+                <FormControl>
+                  <Input type="number" min="1" max="10" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                 </FormControl>
                 <FormMessage />
               </FormItem>

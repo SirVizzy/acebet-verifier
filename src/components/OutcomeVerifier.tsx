@@ -21,7 +21,7 @@ export function OutcomeVerifier() {
         <OutcomeVerifierForm onVerificationChange={setVerificationResult} />
         <div className="flex justify-center">
           <a
-            href="https://github.com/SirVizzy/speedspin-verifier"
+            href="https://github.com/SirVizzy/acebet-verifier"
             target="_blank"
             rel="noopener noreferrer"
             className="inline-flex items-center gap-1.5 text-muted-foreground hover:text-foreground transition-colors"
