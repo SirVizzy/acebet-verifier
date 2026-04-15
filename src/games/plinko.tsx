@@ -8,6 +8,7 @@ export type PlinkoOptions = {
 
 export const plinko: Game<PlinkoOptions> = {
   id: 'plinko',
+  title: 'Plinko',
   schema: z.object({
     rows: z.number().min(8).max(16),
   }),

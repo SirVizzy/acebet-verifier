@@ -10,6 +10,7 @@ export type KenoOptions = {
 
 export const keno: Game<KenoOptions> = {
   id: 'keno',
+  title: 'Keno',
   schema: z.object({
     picks: z.number().min(1).max(10),
   }),

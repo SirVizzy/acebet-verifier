@@ -11,6 +11,7 @@ export type BlackjackOptions = {
 
 export const blackjack: Game<BlackjackOptions> = {
   id: 'blackjack',
+  title: 'Blackjack',
   schema: z.object({
     cards: z.number().min(1),
   }),

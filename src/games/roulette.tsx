@@ -4,6 +4,7 @@ import seedrandom from 'seedrandom';
 
 export const roulette: Game = {
   id: 'roulette',
+  title: 'Roulette',
   schema: z.void(),
   process: (seed) => {
     const rng = seedrandom(seed);

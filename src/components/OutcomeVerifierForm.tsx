@@ -16,6 +16,12 @@ import { dice } from '@/games/dice';
 import { plinko } from '@/games/plinko';
 import { craps } from '@/games/craps';
 import { keno } from '@/games/keno';
+import {
+  EBombRunRiskLevel,
+  getAllBombRunRiskLevels,
+  getBombRunRiskLevelLabel,
+  keepDigging,
+} from '@/games/keep-digging';
 import { VerificationResult } from '@/types';
 import { getSearchParamFromPayload } from '@/helpers/search';
 import { useEffect } from 'react';
@@ -60,6 +66,10 @@ const createSchema = () => {
     base.extend({
       gamemode: z.literal('keno'),
       options: keno.schema,
+    }),
+    base.extend({
+      gamemode: z.literal('keep-digging'),
+      options: keepDigging.schema,
     }),
   ]);
 };
@@ -113,13 +123,13 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
   }
 
   useEffect(() => {
-    if (selectedGame) {
-
-      console.log({
-        ...form.getValues(),
-        options: undefined,
-      })
-
+    if (!selectedGame) {
+      return
+    }
+    
+    if (selectedGame === 'keep-digging') {
+      form.setValue('options', { difficulty: EBombRunRiskLevel.LOW });
+    } else {
       form.reset({
         ...form.getValues(),
         options: undefined,
@@ -139,14 +149,14 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
                 <FormLabel>Gamemode</FormLabel>
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl>
-                    <SelectTrigger className="w-full">
+                    <SelectTrigger>
                       <SelectValue placeholder="Select a gamemode" />
                     </SelectTrigger>
                   </FormControl>
                   <SelectContent>
-                    {Object.keys(games).map((game) => (
+                    {(Object.keys(games) as GameMode[]).map((game) => (
                       <SelectItem key={game} value={game}>
-                        {game}
+                        {games[game].title ?? game}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -214,6 +224,36 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
                 <FormControl>
                   <Input type="number" min="1" max="10" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
                 </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {selectedGame === 'keep-digging' && (
+          <FormField
+            control={form.control}
+            name="options.difficulty"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Difficulty</FormLabel>
+                <Select
+                  onValueChange={(v) => field.onChange(v as EBombRunRiskLevel)}
+                  value={field.value ?? EBombRunRiskLevel.LOW}
+                >
+                  <FormControl>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select difficulty" />
+                    </SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {getAllBombRunRiskLevels().map((value) => (
+                      <SelectItem key={value} value={value}>
+                        {getBombRunRiskLevelLabel(value)}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
                 <FormMessage />
               </FormItem>
             )}

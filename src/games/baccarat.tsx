@@ -11,6 +11,7 @@ export type BaccaratOptions = {
 
 export const baccarat: Game<BaccaratOptions> = {
   id: 'baccarat',
+  title: 'Baccarat',
   schema: z.object({
     cards: z.number().min(1),
   }),

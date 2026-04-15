@@ -7,6 +7,7 @@ const DICES_SIDES = 6;
 
 export const craps: Game = {
   id: 'craps',
+  title: 'Craps',
   schema: z.void(),
   process: (seed) => {
     const results = Array.from({ length: DICES_COUNT }, (_, idx) => {

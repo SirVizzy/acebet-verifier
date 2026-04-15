@@ -12,6 +12,7 @@ export type MinesResult = number[][];
 
 export const mines: Game<MinesOptions, MinesResult> = {
   id: 'mines',
+  title: 'Mines',
   schema: z.object({
     size: z.number().min(3).max(10),
     mines: z.number().min(1).max(25),
