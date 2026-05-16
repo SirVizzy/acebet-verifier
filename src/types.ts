@@ -24,6 +24,7 @@ export type GameOutcomeStep = {
 };
 
 export type GameMode =
+  | 'crash'
   | 'plinko'
   | 'dice'
   | 'blackjack'
@@ -43,4 +44,3 @@ export type Game<TOptions = undefined, TResult = string> = {
     : (seed: string, options: TOptions) => GameOutcome<TResult>;
   render: (outcome: GameOutcome<TResult>) => React.ReactNode;
 };
-

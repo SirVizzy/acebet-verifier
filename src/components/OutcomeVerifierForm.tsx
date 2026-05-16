@@ -22,6 +22,7 @@ import {
   getBombRunRiskLevelLabel,
   keepDigging,
 } from '@/games/keep-digging';
+import { CRASH_CLIENT_SEED, DEFAULT_CRASH_DIVISOR, crash, getRtpFromDivisor } from '@/games/crash';
 import { VerificationResult } from '@/types';
 import { getSearchParamFromPayload } from '@/helpers/search';
 import { useEffect } from 'react';
@@ -33,8 +34,16 @@ const base = z.object({
   nonce: z.number().min(1, 'Nonce is required'),
 });
 
+const crashBase = base.extend({
+  nonce: z.number().optional(),
+});
+
 const createSchema = () => {
   return z.discriminatedUnion('gamemode', [
+    crashBase.extend({
+      gamemode: z.literal('crash'),
+      options: crash.schema,
+    }),
     base.extend({
       gamemode: z.literal('plinko'),
       options: plinko.schema,
@@ -92,12 +101,14 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
   });
 
   const selectedGame = form.watch('gamemode') as GameMode;
+  const crashDivisor = selectedGame === 'crash' ? Number(form.watch('options.divisor')) : DEFAULT_CRASH_DIVISOR;
+  const crashRtp = getRtpFromDivisor(crashDivisor || DEFAULT_CRASH_DIVISOR);
 
   async function onSubmit(values: z.infer<typeof schema>) {
     const game = games[values.gamemode];
-    const seed = `${values.serverSeed}:${values.clientSeed}:${values.nonce}`;
+    const seed = values.gamemode === 'crash' ? values.serverSeed : `${values.serverSeed}:${values.clientSeed}:${values.nonce}`;
     const expectedHash = await getHashFrom(values.serverSeed);
-    const result = game.process(seed, values.options as never) as GameOutcome;
+    const result = await game.process(seed, values.options as never) as GameOutcome;
 
     onVerificationChange({
       node: game.render(result as never),
@@ -114,6 +125,7 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
         serverSeedHash: values.serverSeedHash,
         nonce: values.nonce,
         gamemode: values.gamemode,
+        options: values.options,
       };
       params.set('payload', JSON.stringify(payload));
       window.history.replaceState({}, '', `?${params.toString()}`);
@@ -129,6 +141,15 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
     
     if (selectedGame === 'keep-digging') {
       form.setValue('options', { difficulty: EBombRunRiskLevel.LOW });
+    } else if (selectedGame === 'crash') {
+      form.setValue('clientSeed', form.getValues('clientSeed') || CRASH_CLIENT_SEED);
+      form.setValue('nonce', undefined);
+      form.setValue('options', {
+        divisor: Number(getSearchParamFromPayload('divisor')) || DEFAULT_CRASH_DIVISOR,
+        crashPoint: Number(getSearchParamFromPayload('crashPoint')) || undefined,
+        chainEndHash: getSearchParamFromPayload('chainEndHash'),
+        gameNumber: Number(getSearchParamFromPayload('gameNumber')) || undefined,
+      });
     } else {
       form.reset({
         ...form.getValues(),
@@ -276,7 +297,57 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
           />
         )}
 
-        <div className="grid grid-cols-3 gap-2">
+        {selectedGame === 'crash' && (
+          <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
+              <FormField
+                control={form.control}
+                name="options.divisor"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>House Edge Divisor</FormLabel>
+                    <FormControl>
+                      <Input type="number" min="1" step="1" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                    </FormControl>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+              <FormItem>
+                <FormLabel>Effective RTP</FormLabel>
+                <Input value={`${crashRtp.toFixed(2)}%`} readOnly />
+              </FormItem>
+            </div>
+            <FormField
+              control={form.control}
+              name="options.crashPoint"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Crash Point</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="1" step="0.01" {...field} onChange={(e) => field.onChange(e.target.value ? Number(e.target.value) : undefined)} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="options.chainEndHash"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Chain End Hash</FormLabel>
+                  <FormControl>
+                    <Input placeholder="Enter chain end hash" {...field} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          </div>
+        )}
+
+        <div className={`grid gap-2 ${selectedGame === 'crash' ? 'grid-cols-2' : 'grid-cols-3'}`}>
           <FormField
             control={form.control}
             name="serverSeed"
@@ -305,19 +376,21 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
             )}
           />
 
-          <FormField
-            control={form.control}
-            name="nonce"
-            render={({ field }) => (
-              <FormItem>
-                <FormLabel>Nonce</FormLabel>
-                <FormControl>
-                  <Input type="number" min="0" placeholder="Enter nonce" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
-                </FormControl>
-                <FormMessage />
-              </FormItem>
-            )}
-          />
+          {selectedGame !== 'crash' && (
+            <FormField
+              control={form.control}
+              name="nonce"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Nonce</FormLabel>
+                  <FormControl>
+                    <Input type="number" min="0" placeholder="Enter nonce" {...field} onChange={(e) => field.onChange(Number(e.target.value))} />
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+          )}
         </div>
 
         <FormField
