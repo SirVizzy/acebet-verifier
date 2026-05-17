@@ -13,8 +13,8 @@ export function OutcomeVerifier() {
       <CardHeader>
         <CardTitle>Outcome Verifier</CardTitle>
         <CardDescription>
-          Verify the outcome of a game using the server seed, client seed, and nonce. By providing the server seed hash, you can verify
-          that the outcome has not been tampered with.
+          Verify game outcomes from their fairness inputs. Most games use the server seed, client seed, and nonce; Crash uses the
+          revealed seed, public Bitcoin block hash, and house edge divisor.
         </CardDescription>
       </CardHeader>
       <CardContent className="space-y-4">

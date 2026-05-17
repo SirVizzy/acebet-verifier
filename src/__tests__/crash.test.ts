@@ -1,4 +1,4 @@
-import { createHmac } from 'node:crypto'
+import { createHash, createHmac } from 'node:crypto'
 import { expect, test } from 'vitest'
 import { CRASH_CLIENT_SEED, crash } from '@/games/crash'
 
@@ -24,4 +24,7 @@ test('crash', () => {
 
   expect(result.result).toBe(getExpectedCrashPoint(serverSeed, divisor))
   expect(result.metadata?.divisor).toBe(12)
+  expect(result.metadata?.previousHash).toBe(
+    createHash('sha256').update(serverSeed).digest('hex'),
+  )
 })

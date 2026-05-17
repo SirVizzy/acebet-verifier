@@ -3,8 +3,8 @@ import { z } from "zod";
 
 export type VerificationResult = {
   node: ReactNode;
-  expectedHash: string;
-  receivedHash: string;
+  expectedHash?: string;
+  receivedHash?: string;
   result: GameOutcome;
 };
 

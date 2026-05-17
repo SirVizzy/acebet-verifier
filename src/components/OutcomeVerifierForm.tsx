@@ -34,7 +34,10 @@ const base = z.object({
   nonce: z.number().min(1, 'Nonce is required'),
 });
 
-const crashBase = base.extend({
+const crashBase = z.object({
+  clientSeed: z.string().optional(),
+  serverSeed: z.string().min(1, 'Seed is required'),
+  serverSeedHash: z.string().optional(),
   nonce: z.number().optional(),
 });
 
@@ -88,12 +91,16 @@ const schema = createSchema();
 export type Schema = z.infer<typeof schema>;
 export type SchemaKeys = keyof Schema;
 
+const getInitialSeed = () => {
+  return getSearchParamFromPayload('serverSeed') || getSearchParamFromPayload('seed') || '';
+};
+
 export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
   const form = useForm<z.infer<typeof schema>>({
     resolver: zodResolver(schema),
     defaultValues: {
       clientSeed: getSearchParamFromPayload('clientSeed'),
-      serverSeed: getSearchParamFromPayload('serverSeed'),
+      serverSeed: getInitialSeed(),
       serverSeedHash: getSearchParamFromPayload('serverSeedHash'),
       nonce: getSearchParamFromPayload('nonce'),
       gamemode: getSearchParamFromPayload('gamemode') as GameMode,
@@ -107,26 +114,37 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
   async function onSubmit(values: z.infer<typeof schema>) {
     const game = games[values.gamemode];
     const seed = values.gamemode === 'crash' ? values.serverSeed : `${values.serverSeed}:${values.clientSeed}:${values.nonce}`;
-    const expectedHash = await getHashFrom(values.serverSeed);
     const result = await game.process(seed, values.options as never) as GameOutcome;
+    const hashVerification = values.gamemode === 'crash'
+      ? {}
+      : {
+          expectedHash: await getHashFrom(values.serverSeed),
+          receivedHash: values.serverSeedHash,
+        };
 
     onVerificationChange({
       node: game.render(result as never),
-      expectedHash: expectedHash,
-      receivedHash: values.serverSeedHash,
+      ...hashVerification,
       result: result,
     });
 
     const synchronizeParams = () => {
       const params = new URLSearchParams();
-      const payload = {
-        clientSeed: values.clientSeed,
-        serverSeed: values.serverSeed,
-        serverSeedHash: values.serverSeedHash,
-        nonce: values.nonce,
-        gamemode: values.gamemode,
-        options: values.options,
-      };
+      const payload = values.gamemode === 'crash'
+        ? {
+            clientSeed: values.clientSeed,
+            seed: values.serverSeed,
+            gamemode: values.gamemode,
+            options: values.options,
+          }
+        : {
+            clientSeed: values.clientSeed,
+            serverSeed: values.serverSeed,
+            serverSeedHash: values.serverSeedHash,
+            nonce: values.nonce,
+            gamemode: values.gamemode,
+            options: values.options,
+          };
       params.set('payload', JSON.stringify(payload));
       window.history.replaceState({}, '', `?${params.toString()}`);
     };
@@ -144,11 +162,11 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
     } else if (selectedGame === 'crash') {
       form.setValue('clientSeed', form.getValues('clientSeed') || CRASH_CLIENT_SEED);
       form.setValue('nonce', undefined);
+      form.setValue('serverSeed', form.getValues('serverSeed') || getInitialSeed());
+      form.setValue('serverSeedHash', undefined);
       form.setValue('options', {
         divisor: Number(getSearchParamFromPayload('divisor')) || DEFAULT_CRASH_DIVISOR,
         crashPoint: Number(getSearchParamFromPayload('crashPoint')) || undefined,
-        chainEndHash: getSearchParamFromPayload('chainEndHash'),
-        gameNumber: Number(getSearchParamFromPayload('gameNumber')) || undefined,
       });
     } else {
       form.reset({
@@ -331,19 +349,6 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
                 </FormItem>
               )}
             />
-            <FormField
-              control={form.control}
-              name="options.chainEndHash"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Chain End Hash</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter chain end hash" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
           </div>
         )}
 
@@ -353,9 +358,9 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
             name="serverSeed"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Server Seed</FormLabel>
+                <FormLabel>{selectedGame === 'crash' ? 'Seed' : 'Server Seed'}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter server seed" {...field} />
+                  <Input placeholder={selectedGame === 'crash' ? 'Enter crash seed' : 'Enter server seed'} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -367,9 +372,9 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
             name="clientSeed"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Client Seed</FormLabel>
+                <FormLabel>{selectedGame === 'crash' ? 'Bitcoin Block Hash' : 'Client Seed'}</FormLabel>
                 <FormControl>
-                  <Input placeholder="Enter client seed" {...field} />
+                  <Input placeholder="Enter client seed" readOnly={selectedGame === 'crash'} {...field} />
                 </FormControl>
                 <FormMessage />
               </FormItem>
@@ -393,19 +398,21 @@ export const OutcomeVerifierForm = ({ onVerificationChange }: Props) => {
           )}
         </div>
 
-        <FormField
-          control={form.control}
-          name="serverSeedHash"
-          render={({ field }) => (
-            <FormItem>
-              <FormLabel>Server Seed (Hashed)</FormLabel>
-              <FormControl>
-                <Input placeholder="Enter server seed hash" {...field} />
-              </FormControl>
-              <FormMessage />
-            </FormItem>
-          )}
-        />
+        {selectedGame !== 'crash' && (
+          <FormField
+            control={form.control}
+            name="serverSeedHash"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Server Seed (Hashed)</FormLabel>
+                <FormControl>
+                  <Input placeholder="Enter server seed hash" {...field} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
 
         <Button type="submit" className="w-full">
           Verify

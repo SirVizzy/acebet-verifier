@@ -16,8 +16,6 @@ const RTP_PERCENTAGE_SCALE = 100;
 export type CrashOptions = {
   divisor: number;
   crashPoint?: number;
-  chainEndHash?: string;
-  gameNumber?: number;
 };
 
 const textEncoder = new TextEncoder();
@@ -28,14 +26,13 @@ export const crash: Game<CrashOptions> = {
   schema: z.object({
     divisor: z.number().int().min(1),
     crashPoint: z.number().min(1).optional(),
-    chainEndHash: z.string().optional(),
-    gameNumber: z.number().int().min(1).optional(),
   }),
   process: (serverSeed, options) => {
     const divisor = options.divisor;
     const houseEdge = getHouseEdgeFromDivisor(divisor);
     const rtp = getRtpFromDivisor(divisor);
     const saltedSeed = getHmacSha256Hex(serverSeed, CRASH_CLIENT_SEED);
+    const previousHash = getSha256Hex(serverSeed);
     const isInstantCrash = isDivisible(saltedSeed, divisor);
     const result = isInstantCrash ? 1 : getCrashPointFromHash(saltedSeed);
 
@@ -57,6 +54,7 @@ export const crash: Game<CrashOptions> = {
           houseEdge,
           divisor,
           divisible: isInstantCrash,
+          previousHash,
         },
       },
     ];
@@ -70,8 +68,7 @@ export const crash: Game<CrashOptions> = {
         rtp,
         houseEdge,
         divisor,
-        chainEndHash: options.chainEndHash ?? null,
-        gameNumber: options.gameNumber ?? null,
+        previousHash,
         expectedCrashPoint: options.crashPoint ?? null,
         matchesExpectedCrashPoint: options.crashPoint == null ? null : result === options.crashPoint,
       },
@@ -103,4 +100,8 @@ const isDivisible = (hash: string, divisor: number) => {
 
 const getHmacSha256Hex = (message: string, key: string) => {
   return bytesToHex(hmac(sha256, textEncoder.encode(key), textEncoder.encode(message)));
+};
+
+const getSha256Hex = (message: string) => {
+  return bytesToHex(sha256(textEncoder.encode(message)));
 };
